@@ -19,13 +19,12 @@ case $n in
 	"Connect to Database") 	echo "Enter DatabaseName" && read Db_name 
 			cd ./$Db_name
 			x=`pwd` 
-			echo $x
+			#echo $x
 			select choise in "Create Table" "List Tables" "Drop Table" "Insert into Table" "Select From Table" "Delete From Table" "Update Table"
 			do
 			case $choise in
-				"Create Table")  echo "Enter Table Name" 
-				       	read Table_name
-						if [ $Table_name == "$(awk '{print $0}' .Table_names)" ]
+				"Create Table")  echo "Enter Table Name" && read Table_name
+						if [ $Table_name == "$( grep -o -w "$Table_name" ".Table_names")" ]
 						then
 							echo "This Table already exist, change Table name"
 						else
@@ -33,31 +32,28 @@ case $n in
 							echo "Etner The Primary key"
 							read prim_key
 							echo "$Table_name	$prim_key" >> ./.Table_names
-							echo "Enter Number of Columns" && read num_colum
-							
-
+							echo "Enter Number of Columns" && read num_colum							
 							k=0
 							while [ $num_colum -gt 0 ]
 							do
-								echo " what coulm $(($k+1)) datatype is ? such as [ int ,string ]"
+								echo " what coulm $(($k+1)) datatype is ? such as [ int, string, Float ]"
 								read datatype
 								echo "enter coulm $(($k+1))"
-								read -p "Enter value: " datatype
+								read -p "Enter value: " value
 
-								if [[ $datatype =~ ^[+-]?[0-9]+$ ]]; then
-									input="integer"
-								elif [[ $datatype =~ ^[+-]?[0-9]*\.[0-9]+$ ]]; then
+								if [[ $value =~ ^[+-]?[0-9]+$ ]]; then
+									input="int"
+								elif [[ $value =~ ^[+-]?[0-9]*\.[0-9]+$ ]]; then
 							        	input="Float"
 								else
 									 input="string"
 								fi
-								read x
-								if [[ -z "$x" || $datatype != $var ]]
+								if [[ -z "$value" || "$datatype" != "$input" ]]
 								then
 									echo "please ReEnter this cell, Enter $datatype value!"
 									break
 								else
-									array[$k]=$x
+									array[$k]=$value
 									k=$(($k+1))
 									if [ $k -eq $num_colum ]
 									then
@@ -72,7 +68,7 @@ case $n in
 				"List Tables") ls .
 					;;
 				"Drop Table") echo "Enter Table Name" && read d_table 
-						if [ $d_table == "$(awk '{print $0}' .Table_names)" ]
+						if [ $d_table == "$( grep -o -w "$d_table" ".Table_names")" ]
 						then
 					 		rm $d_table
 						else
@@ -80,7 +76,7 @@ case $n in
 						fi
 					;;
 				"Insert into Table") echo "Enter Table Name" && read Table
-					if [ $Table == "$(awk '{print $0}' .Table_names)" ]
+					if [ $Table == "$(grep -o -w "$Table" ".Table_names")" ]
 					then
 						result=$(awk '{print NF}' $Table|sort -nu| tail -n 1)    
 						#result = $(awk -F BEGIN'{print $NF}' $Table)
@@ -102,17 +98,34 @@ case $n in
 
 					fi
 					;;
-				"Select From Table")
+				"Select From Table") echo "Enter Table Name" && read Table_name
+					if [ "$Table_name" == "$(grep -o -w "$Table_name" ".Table_names")" ]
+					then
+						cat -n $Table_name
+						echo "Enter number of row you need to select it " && read number
+						sed -n "${number}p" "$Table_name"
+
+					else
+						echo "This Table does not exists"
+					fi
 					;;
 				"Delete From Table") echo "Enter Table Name" && read Table_name
-					if [ $Table_name == "$(awk '{print $0}' .Table_names)" ]
+					if [ $Table_name == "$(grep -o -w "$Table_name"  ".Table_names")" ]
 					then
+
+						echo "Enter number of row you need to delete it"
+						read row
+						new_content=" "
+						 sed -i "${row}s/.*/${new_content}/" "$Table_name"
+						 cat $Table_name
 
 					else
 						echo "This Table does not exists"
 					fi
 					;;
 				"Update Table")
+					;;
+				*) echo " This Option does not exist, Please Enter an Correct Option"
 					;;
 			esac
 			
